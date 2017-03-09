@@ -56,6 +56,7 @@ import org.apache.http.conn.util.InetAddressUtils;
 import org.apache.http.conn.util.PublicSuffixMatcher;
 
 /**
+ * 默认的主机名称校验
  * Default {@link javax.net.ssl.HostnameVerifier} implementation.
  *
  * @since 4.4
@@ -63,8 +64,10 @@ import org.apache.http.conn.util.PublicSuffixMatcher;
 @Immutable
 public final class DefaultHostnameVerifier implements HostnameVerifier {
 
-    final static int DNS_NAME_TYPE        = 2;
-    final static int IP_ADDRESS_TYPE      = 7;
+    //DNS名称类型，默认为2
+    final static int DNS_NAME_TYPE = 2;
+    // IP地址类型，默认为7
+    final static int IP_ADDRESS_TYPE = 7;
 
     private final Log log = LogFactory.getLog(getClass());
 
@@ -81,11 +84,12 @@ public final class DefaultHostnameVerifier implements HostnameVerifier {
     @Override
     public final boolean verify(final String host, final SSLSession session) {
         try {
+            // 返回同级身份，该同级身份是作为定义会话的一部分而建立的。
             final Certificate[] certs = session.getPeerCertificates();
             final X509Certificate x509 = (X509Certificate) certs[0];
             verify(host, x509);
             return true;
-        } catch(final SSLException ex) {
+        } catch (final SSLException ex) {
             if (log.isDebugEnabled()) {
                 log.debug(ex.getMessage(), ex);
             }
@@ -93,10 +97,20 @@ public final class DefaultHostnameVerifier implements HostnameVerifier {
         }
     }
 
+    /**
+     * 校验host与X509Certificate是否匹配
+     *
+     * @param host
+     * @param cert
+     * @throws SSLException
+     */
     public final void verify(
             final String host, final X509Certificate cert) throws SSLException {
+        // 是否是IP4
         final boolean ipv4 = InetAddressUtils.isIPv4Address(host);
+        // 是否是IP6
         final boolean ipv6 = InetAddressUtils.isIPv6Address(host);
+        // host类型，是IP还是DNS
         final int subjectType = ipv4 || ipv6 ? IP_ADDRESS_TYPE : DNS_NAME_TYPE;
         final List<String> subjectAlts = extractSubjectAlts(cert, subjectType);
         if (subjectAlts != null && !subjectAlts.isEmpty()) {
@@ -159,7 +173,7 @@ public final class DefaultHostnameVerifier implements HostnameVerifier {
     }
 
     static void matchCN(final String host, final String cn,
-                 final PublicSuffixMatcher publicSuffixMatcher) throws SSLException {
+                        final PublicSuffixMatcher publicSuffixMatcher) throws SSLException {
         if (!matchIdentityStrict(host, cn, publicSuffixMatcher)) {
             throw new SSLException("Certificate for <" + host + "> doesn't match " +
                     "common name of the certificate subject: " + cn);
@@ -261,7 +275,7 @@ public final class DefaultHostnameVerifier implements HostnameVerifier {
         Collection<List<?>> c = null;
         try {
             c = cert.getSubjectAlternativeNames();
-        } catch(final CertificateParsingException ignore) {
+        } catch (final CertificateParsingException ignore) {
         }
         List<String> subjectAltList = null;
         if (c != null) {

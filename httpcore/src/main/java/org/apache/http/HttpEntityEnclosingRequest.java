@@ -34,6 +34,7 @@ package org.apache.http;
 public interface HttpEntityEnclosingRequest extends HttpRequest {
 
     /**
+     * 标示 本次请求是否使用 期望继续 的握手
      * Tells if this request should use the expect-continue handshake.
      * The expect continue handshake gives the server a chance to decide
      * whether to accept the entity enclosing request before the possibly

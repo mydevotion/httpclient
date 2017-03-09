@@ -876,25 +876,30 @@ public class HttpClientBuilder {
         // We copy the instance fields to avoid changing them, and rename to avoid accidental use of the wrong version
 
         // 初始化必要的配置项
+        // 检测域名匹配的类
         PublicSuffixMatcher publicSuffixMatcherCopy = this.publicSuffixMatcher;
         if (publicSuffixMatcherCopy == null) {
             publicSuffixMatcherCopy = PublicSuffixMatcherLoader.getDefault();
         }
 
         //  HttpRequestExecutor有waitForContinue默认值
+        // 阻塞的HTTP客户端协议处理器，这个很重要
         HttpRequestExecutor requestExecCopy = this.requestExec;
         if (requestExecCopy == null) {
             requestExecCopy = new HttpRequestExecutor();
         }
 
+        // 这个灰常重要
         HttpClientConnectionManager connManagerCopy = this.connManager;
         if (connManagerCopy == null) {
 
             //初始化sslSocketFactoryCopy,下面这个是处理SSL请求协议的程序
             LayeredConnectionSocketFactory sslSocketFactoryCopy = this.sslSocketFactory;
             if (sslSocketFactoryCopy == null) {
+                // 支持的协议
                 final String[] supportedProtocols = systemProperties ? split(
                         System.getProperty("https.protocols")) : null;
+                // 支持的密码
                 final String[] supportedCipherSuites = systemProperties ? split(
                         System.getProperty("https.cipherSuites")) : null;
 

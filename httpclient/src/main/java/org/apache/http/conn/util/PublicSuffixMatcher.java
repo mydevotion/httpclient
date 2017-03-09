@@ -39,6 +39,9 @@ import org.apache.http.util.Args;
  * 实用的类，能够测试 DNS 名字是否匹配 常用的互联网网址后缀
  * Utility class that can test if DNS names match the content of the Public Suffix List.
  * <p/>
+ * <p/>
+ * 默认情况下是通过加载"/mozilla/public-suffix-list.txt"来初始化本类
+ * <p/>
  * An up-to-date list of suffixes can be obtained from
  * <a href="http://publicsuffix.org/">publicsuffix.org</a>
  *
@@ -48,18 +51,20 @@ import org.apache.http.util.Args;
 @ThreadSafe
 public final class PublicSuffixMatcher {
 
+    // 规则
     private final Map<String, String> rules;
+    // 免责
     private final Map<String, String> exceptions;
 
     public PublicSuffixMatcher(final Collection<String> rules, final Collection<String> exceptions) {
-        Args.notNull(rules,  "Domain suffix rules");
+        Args.notNull(rules, "Domain suffix rules");
         this.rules = new ConcurrentHashMap<String, String>(rules.size());
-        for (String rule: rules) {
+        for (String rule : rules) {
             this.rules.put(rule, rule);
         }
         if (exceptions != null) {
             this.exceptions = new ConcurrentHashMap<String, String>(exceptions.size());
-            for (String exception: exceptions) {
+            for (String exception : exceptions) {
                 this.exceptions.put(exception, exception);
             }
         } else {
@@ -68,6 +73,7 @@ public final class PublicSuffixMatcher {
     }
 
     /**
+     * 根据给定的域名，返回域名注册的那部分
      * Returns registrable part of the domain for the given domain name of {@code null}
      * if given domain represents a public suffix.
      *
@@ -86,10 +92,12 @@ public final class PublicSuffixMatcher {
         while (segment != null) {
 
             // An exception rule takes priority over any other matching rule.
+            // 先判断是否在免责规则里面，这个是最高规则
             if (this.exceptions != null && this.exceptions.containsKey(IDN.toUnicode(segment))) {
                 return segment;
             }
 
+            // 如果在规则里面，也返回
             if (this.rules.containsKey(IDN.toUnicode(segment))) {
                 break;
             }

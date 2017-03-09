@@ -46,6 +46,9 @@ import org.apache.http.util.Args;
  * {@code HttpRequestExecutor} is a client side HTTP protocol handler based
  * on the blocking (classic) I/O model.
  * <p/>
+ * {@code HttpRequestExecutor} 依赖于{@link HttpProcessor} 为所有的输出通信生成强制的协议头，
+ * 也适用于普通的,横截面消息转换为输入的和输出的通信。
+ * 应用程序特定的处理 可以在 请求被执行或者响应被接受的时候 外部实现 {@code HttpRequestExecutor}
  * {@code HttpRequestExecutor} relies on {@link HttpProcessor} to generate
  * mandatory protocol headers for all outgoing messages and apply common,
  * cross-cutting message transformations to all incoming and outgoing messages.
@@ -194,23 +197,29 @@ public class HttpRequestExecutor {
 
         HttpResponse response = null;
 
+        // 将连接设置到HttpContext中
         context.setAttribute(HttpCoreContext.HTTP_CONNECTION, conn);
+        // 设置请求是否被发送出去,false未被发送出去
         context.setAttribute(HttpCoreContext.HTTP_REQ_SENT, Boolean.FALSE);
-
+        // 设置请求头
         conn.sendRequestHeader(request);
         if (request instanceof HttpEntityEnclosingRequest) {
             // Check for expect-continue handshake. We have to flush the
             // headers and wait for an 100-continue response to handle it.
             // If we get a different response, we must not send the entity.
             boolean sendentity = true;
+            // 从请求头里面获取协议版本
             final ProtocolVersion ver =
                     request.getRequestLine().getProtocolVersion();
+
+            // 如果版本不低于1.0，且请求参数中设置了expectContinue则走下面
             if (((HttpEntityEnclosingRequest) request).expectContinue() &&
                     !ver.lessEquals(HttpVersion.HTTP_1_0)) {
 
                 conn.flush();
                 // As suggested by RFC 2616 section 8.2.3, we don't wait for a
                 // 100-continue response forever. On timeout, send the entity.
+                // 等待this.waitForContinue长的时间，看是否数据可用
                 if (conn.isResponseAvailable(this.waitForContinue)) {
                     response = conn.receiveResponseHeader();
                     if (canResponseHaveBody(request, response)) {
